@@ -28,10 +28,10 @@ interface Image {
   width: number;
 }
 
-const clientId = import.meta.env.VITE_SPTFYID;
-const params = new URLSearchParams(window.location.search);
-const code = params.get("code");
-
+//const clientId = import.meta.env.VITE_SPTFYID;
+//const params = new URLSearchParams(window.location.search);
+//const code = params.get("code");
+/*
 if (!code) {
   console.log(clientId, import.meta.env)
   //redirectToAuthCodeFlow(clientId);
@@ -107,10 +107,21 @@ export async function redirectToAuthCodeFlow(clientId: string) {
   params.append("code_challenge", challenge);
 
   document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
-}
+}*/
 
 export default {
-  data: () => ({ drawer: true, rail: true }),
+  data: () => ({
+    drawer: true,
+    rail: true,
+    sptfId: import.meta.env.VITE_SPTFYID
+  }),
+  mounted(): any {
+      console.log('mounted', this.sptfId)
+  },
+  methods: {
+    connect() {
+    }
+  }
 }
 </script>
 
@@ -125,11 +136,7 @@ export default {
       </v-list>
       <v-divider></v-divider>
       <v-list density="compact" nav>
-        <v-list-item
-          prepend-icon="mdi:mdi-home-city"
-          title="Home"
-          value="home"
-        ></v-list-item>
+        <v-list-item prepend-icon="mdi:mdi-home-city" title="Home" value="home"></v-list-item>
         <v-list-item
           prepend-icon="mdi:mdi-account"
           title="My Account"
