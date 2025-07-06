@@ -115,11 +115,80 @@ export default {
     rail: true,
     sptfId: import.meta.env.VITE_SPTFYID
   }),
-  mounted(): any {
-      console.log('mounted', this.sptfId, import.meta.env)
+  async mounted() {
+    console.log('mounted', this.sptfId, import.meta.env);
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (code) {
+      console.log(code)
+      const accessToken = await this.getAccessToken(code);
+      const profile = await this.fetchProfile(accessToken);
+      console.log(profile)
+      //populateUI(profile);
+    }
   },
   methods: {
-    connect() {
+    connect: async function() {
+      this.redirectToAuthCodeFlow();
+    },
+    redirectToAuthCodeFlow: async function() {
+      const verifier = this.generateCodeVerifier(128);
+      const challenge = await this.generateCodeChallenge(verifier);
+
+      localStorage.setItem("verifier", verifier);
+
+      const params = new URLSearchParams();
+      params.append("client_id", this.sptfId);
+      params.append("response_type", "code");
+      params.append("redirect_uri", "http://127.0.0.1:5173/callback");
+      params.append("scope", "user-read-private user-read-email");
+      params.append("code_challenge_method", "S256");
+      params.append("code_challenge", challenge);
+
+      document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
+    },
+    generateCodeChallenge: async (codeVerifier: string) => {
+      const data = new TextEncoder().encode(codeVerifier);
+      const digest = await window.crypto.subtle.digest('SHA-256', data);
+      return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    },
+    generateCodeVerifier(length: number) {
+      let text = '';
+      const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+      for (let i = 0; i < length; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+      }
+      return text;
+    },
+    getAccessToken: async function(code: string) {
+      const verifier = localStorage.getItem("verifier");
+
+      const params = new URLSearchParams();
+      params.append("client_id", this.sptfId);
+      params.append("grant_type", "authorization_code");
+      params.append("code", code);
+      params.append("redirect_uri", "http://127.0.0.1:5173/callback");
+      params.append("code_verifier", verifier!);
+
+      const result = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: params
+      });
+
+      const { access_token } = await result.json();
+      return access_token;
+    },
+    fetchProfile: async (token: string) => {
+      const result = await fetch("https://api.spotify.com/v1/me", {
+        method: "GET", headers: { Authorization: `Bearer ${token}` }
+      });
+
+      return await result.json();
     }
   }
 }
@@ -158,6 +227,7 @@ export default {
     </v-app-bar>
 
     <v-main>
+      <button v-on:click="connect()">Login</button>
       <section id="profile">
         <h2>Logged in as <span id="displayName"></span></h2>
         <span id="avatar"></span>
