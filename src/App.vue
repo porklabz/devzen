@@ -116,7 +116,7 @@ export default {
     sptfId: import.meta.env.VITE_SPTFYID
   }),
   mounted(): any {
-      console.log('mounted', this.sptfId)
+      console.log('mounted', this.sptfId, import.meta.env)
   },
   methods: {
     connect() {
