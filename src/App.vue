@@ -171,7 +171,7 @@ export default {
       params.append("client_id", this.sptfId);
       params.append("grant_type", "authorization_code");
       params.append("code", code);
-      params.append("redirect_uri", "http://127.0.0.1:5173/callback");
+      params.append("redirect_uri", "https://dvzen.netlify.app/callback");
       params.append("code_verifier", verifier!);
 
       const result = await fetch("https://accounts.spotify.com/api/token", {
